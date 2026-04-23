@@ -1,0 +1,568 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --pk1:#FFB6C1;--pk2:#FF85A1;--pk3:#E8497A;--pk4:#C2185B;
+  --lv1:#FFF0F5;--lv2:#FFE4EF;--lv3:#FADADD;
+  --pu1:#F3E5F5;--pu2:#CE93D8;--pu3:#9C27B0;
+  --cat1:#FF69B4;--cat2:#FFB347;--gold:#FFD700;
+}
+#app{background:#FFF0F5;min-height:600px;font-family:var(--font-sans,system-ui)}
+.screen{display:none;flex-direction:column;align-items:center;padding:1rem 0.75rem 2rem;animation:fadeIn .3s ease}
+.screen.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-10px)}70%{transform:translateY(-4px)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes celebrate{0%{transform:scale(1)}35%{transform:scale(1.15)}65%{transform:scale(.97)}100%{transform:scale(1)}}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-8px) rotate(3deg)}}
+@keyframes heartPop{0%{transform:scale(0) translateY(0);opacity:1}80%{transform:scale(1.2) translateY(-40px);opacity:1}100%{transform:scale(1) translateY(-60px);opacity:0}}
+@keyframes starBurst{0%{transform:scale(0) rotate(0deg);opacity:1}100%{transform:scale(2) rotate(180deg);opacity:0}}
+@keyframes confettiDrop{0%{top:-5%;transform:rotate(0) scale(1);opacity:1}100%{top:110%;transform:rotate(720deg) scale(.5);opacity:0}}
+
+/* HOME */
+.home-banner{width:100%;background:#FFE4EF;border-radius:20px;padding:1.25rem 1rem 1rem;text-align:center;margin-bottom:1rem;position:relative;overflow:hidden}
+.home-cats{display:flex;justify-content:center;gap:10px;margin-bottom:.5rem}
+.home-title{font-size:30px;font-weight:500;color:#C2185B;letter-spacing:-1px}
+.home-title span{color:#9C27B0}
+.home-sub{font-size:12px;color:#E8497A;margin-top:3px}
+.paw-deco{position:absolute;font-size:20px;opacity:.15}
+
+.level-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:340px}
+.lcard{border-radius:18px;padding:1rem .75rem;text-align:center;cursor:pointer;border:none;transition:transform .15s;position:relative;overflow:hidden}
+.lcard:active{transform:scale(.95)}
+.lcard .lc-cat{font-size:28px;margin-bottom:6px}
+.lcard .lc-name{font-size:15px;font-weight:500}
+.lcard .lc-info{font-size:11px;opacity:.8;margin-top:2px}
+.lcard .lc-prog{font-size:10px;margin-top:5px;opacity:.7}
+.lc-easy{background:#FFF0F5;border:2px solid #FFB6C1;color:#C2185B}
+.lc-med{background:#F3E5F5;border:2px solid #CE93D8;color:#7B1FA2}
+.lc-hard{background:#FFF8E1;border:2px solid #FFD54F;color:#E65100}
+.lc-exp{background:#FCE4EC;border:2px solid #F48FB1;color:#880E4F}
+.lcard .stars{font-size:12px;margin-top:4px;letter-spacing:2px}
+
+/* STAGE dots */
+.stage-bar{display:flex;align-items:center;justify-content:center;gap:8px;margin:.6rem 0}
+.sdot{width:12px;height:12px;border-radius:50%;background:#FFB6C1;border:2px solid #FF85A1;transition:all .3s}
+.sdot.done{background:#FF85A1;border-color:#C2185B}
+.sdot.active{background:#C2185B;border-color:#880E4F;transform:scale(1.2)}
+.stage-label{font-size:12px;color:#E8497A;font-weight:500}
+
+/* GAME HEADER */
+.game-header{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:340px;margin-bottom:.5rem}
+.btn-back{background:#FFE4EF;border:1.5px solid #FFB6C1;border-radius:12px;padding:7px 12px;font-size:13px;cursor:pointer;color:#C2185B;font-weight:500}
+.btn-back:active{transform:scale(.95)}
+.level-chip{font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px}
+.chip-easy{background:#FFE4EF;color:#C2185B;border:1px solid #FFB6C1}
+.chip-med{background:#F3E5F5;color:#7B1FA2;border:1px solid #CE93D8}
+.chip-hard{background:#FFF8E1;color:#E65100;border:1px solid #FFD54F}
+.chip-exp{background:#FCE4EC;color:#880E4F;border:1px solid #F48FB1}
+.info-row{display:flex;gap:8px;align-items:center}
+.ipill{background:#FFE4EF;border:1px solid #FFB6C1;border-radius:16px;padding:4px 10px;font-size:12px;color:#C2185B;display:flex;align-items:center;gap:4px}
+.ipill b{font-weight:500;color:#880E4F}
+.mistake-wrap{display:flex;gap:4px}
+.mdot{width:10px;height:10px;border-radius:50%;background:#FF85A1;border:1.5px solid #C2185B;transition:all .2s}
+.mdot.used{background:#FADADD;border-color:#FFB6C1}
+
+/* BOARD */
+.board-container{width:100%;max-width:340px;position:relative}
+.cat-deco{position:absolute;font-size:18px;opacity:.6;pointer-events:none}
+.board{display:grid;grid-template-columns:repeat(9,1fr);border:3px solid #C2185B;border-radius:14px;overflow:hidden;width:100%;aspect-ratio:1;background:white}
+.cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;border-right:.5px solid #FFB6C1;border-bottom:.5px solid #FFB6C1;transition:background .1s;user-select:none;position:relative}
+.cell:nth-child(3n){border-right:2px solid #E8497A}
+.cell:nth-child(9n){border-right:none}
+.cell:nth-child(n+19):nth-child(-n+27){border-bottom:2px solid #E8497A}
+.cell:nth-child(n+46):nth-child(-n+54){border-bottom:2px solid #E8497A}
+.cell:last-child{border-right:none}
+.cell-given{color:#880E4F;font-weight:500;background:#FFF0F5}
+.cell-input{color:#7B1FA2}
+.cell-error{color:#C62828!important;background:#FFEBEE!important;animation:shake .35s}
+.cell-selected{background:#FFB6C1!important}
+.cell-hl{background:#FFF0F5}
+.cell-same{background:#FFE4EF}
+.cell-given.cell-selected{background:#FF85A1!important}
+.cell-ok{background:#F3E5F5!important;color:#6A1B9A!important;animation:celebrate .35s}
+.notes-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:100%;height:100%;padding:1px}
+.nnote{font-size:7px;color:#CE93D8;display:flex;align-items:center;justify-content:center}
+
+/* NUMPAD */
+.numpad{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;width:100%;max-width:340px;margin-top:.75rem}
+.nbtn{aspect-ratio:1;border:1.5px solid #FFB6C1;border-radius:12px;background:white;font-size:20px;font-weight:500;color:#C2185B;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .1s,background .1s;position:relative}
+.nbtn:active{transform:scale(.88);background:#FFE4EF}
+.nBtn.used{opacity:.3}
+.ncnt{position:absolute;bottom:3px;right:4px;font-size:8px;color:#CE93D8}
+.nBtn-erase{font-size:14px;color:#CE93D8}
+.nBtn-note{font-size:11px;color:#CE93D8}
+.nBtn-note.on{background:#FFE4EF;color:#C2185B;border-color:#FF85A1}
+
+/* ACTIONS */
+.actions{display:flex;gap:7px;width:100%;max-width:340px;margin-top:8px}
+.abtn{flex:1;padding:8px 4px;border-radius:12px;border:1px solid #FFB6C1;background:#FFF0F5;font-size:11px;color:#C2185B;cursor:pointer;text-align:center;transition:transform .1s}
+.abtn:active{transform:scale(.95)}
+.abtn span{display:block;font-size:15px;margin-bottom:2px}
+
+/* WIN SCREEN */
+.win-wrap{width:100%;background:#FFF0F5;min-height:500px;display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem}
+.win-cat-row{display:flex;gap:12px;margin-bottom:.75rem}
+.win-card{background:white;border:2px solid #FFB6C1;border-radius:20px;padding:1.5rem 1.25rem;text-align:center;width:100%;max-width:300px;animation:popIn .4s}
+.win-title{font-size:22px;font-weight:500;color:#C2185B;margin-bottom:.25rem}
+.win-sub{font-size:13px;color:#E8497A;margin-bottom:1.25rem}
+.win-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.25rem}
+.wstat{background:#FFF0F5;border-radius:12px;padding:.6rem .25rem}
+.wstat-v{font-size:18px;font-weight:500;color:#880E4F}
+.wstat-l{font-size:10px;color:#E8497A;margin-top:2px}
+.btn-pink{width:100%;padding:12px;background:#E8497A;color:white;border:none;border-radius:14px;font-size:15px;cursor:pointer;margin-bottom:8px;transition:transform .1s}
+.btn-pink:active{transform:scale(.97)}
+.btn-outline{width:100%;padding:10px;background:transparent;color:#C2185B;border:1.5px solid #FFB6C1;border-radius:14px;font-size:13px;cursor:pointer;transition:transform .1s}
+.btn-outline:active{transform:scale(.97)}
+
+/* LEVEL COMPLETE */
+.lc-wrap{width:100%;background:#FFF0F5;min-height:600px;display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem}
+.lc-card{background:white;border:3px solid #FF85A1;border-radius:24px;padding:1.75rem 1.25rem;text-align:center;width:100%;max-width:300px;animation:popIn .5s}
+.lc-big-cat{font-size:72px;animation:bounce 1.5s infinite;display:inline-block;margin-bottom:.5rem}
+.lc-title{font-size:24px;font-weight:500;color:#C2185B;margin-bottom:.25rem}
+.lc-sub{font-size:13px;color:#E8497A;margin-bottom:1.25rem}
+.trophy-row{display:flex;justify-content:center;gap:8px;margin-bottom:1.25rem}
+.trophy-item{background:#FFF8E1;border:2px solid #FFD54F;border-radius:12px;padding:.6rem .5rem;text-align:center;flex:1}
+.trophy-v{font-size:16px;font-weight:500;color:#E65100}
+.trophy-l{font-size:10px;color:#FF8F00;margin-top:2px}
+.stars-big{display:flex;justify-content:center;gap:4px;margin-bottom:1.25rem}
+.star-anim{font-size:32px;animation:bounce .6s ease both}
+
+/* CAT ILLUSTRATIONS via SVG */
+.cat-svg{display:inline-block}
+
+/* PARTICLES */
+.particle-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;border-radius:24px}
+.heart-p{position:absolute;font-size:16px;animation:heartPop .8s ease forwards}
+.star-p{position:absolute;width:10px;height:10px;border-radius:2px;animation:starBurst .7s ease forwards}
+.confetti-p{position:absolute;width:7px;height:7px;border-radius:2px}
+</style>
+
+<div id="app">
+  <h2 class="sr-only">Neko Sudoku — game sudoku phong cách mèo dễ thương</h2>
+
+  <!-- HOME -->
+  <div id="home" class="screen active">
+    <div class="home-banner">
+      <div style="position:absolute;top:8px;left:10px;font-size:16px;opacity:.2">🐾</div>
+      <div style="position:absolute;top:5px;right:15px;font-size:14px;opacity:.2">🐾</div>
+      <div style="position:absolute;bottom:5px;left:30px;font-size:12px;opacity:.2">🐾</div>
+      <div class="home-cats" id="home-cats-row"></div>
+      <div class="home-title">Ne<span>ko</span> Sudoku</div>
+      <div class="home-sub">✦ Cùng mèo giải đố nào! ✦</div>
+    </div>
+    <div class="level-grid" id="lv-grid"></div>
+    <div style="font-size:11px;color:#E8497A;margin-top:1rem;text-align:center" id="home-record"></div>
+  </div>
+
+  <!-- GAME -->
+  <div id="game" class="screen">
+    <div class="game-header">
+      <button class="btn-back" onclick="goHome()">← Về</button>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+        <span class="level-chip" id="lv-chip"></span>
+        <div class="stage-bar" id="stage-bar"></div>
+      </div>
+      <div class="info-row">
+        <div class="ipill">⏱ <b id="timer">0:00</b></div>
+        <div class="mistake-wrap" id="m-wrap">
+          <div class="mdot" id="m0"></div><div class="mdot" id="m1"></div><div class="mdot" id="m2"></div>
+        </div>
+      </div>
+    </div>
+    <div class="board-container">
+      <div class="board" id="board"></div>
+    </div>
+    <div class="numpad" id="numpad"></div>
+    <div class="actions">
+      <button class="abtn" onclick="undoMove()"><span>↩</span>Undo</button>
+      <button class="abtn" id="note-btn" onclick="toggleNote()"><span>✏</span>Ghi chú</button>
+      <button class="abtn" onclick="useHint()"><span>💡</span>Gợi ý</button>
+      <button class="abtn" onclick="togglePause()" id="pause-btn"><span id="pi">⏸</span>Dừng</button>
+    </div>
+  </div>
+
+  <!-- STAGE WIN -->
+  <div id="stagewin" class="screen">
+    <div class="win-wrap">
+      <div class="win-cat-row" id="sw-cats"></div>
+      <div class="win-card" style="position:relative">
+        <div class="particle-layer" id="sw-particles"></div>
+        <div style="font-size:44px;margin-bottom:.5rem" id="sw-icon">😺</div>
+        <div class="win-title" id="sw-title">Màn hoàn thành!</div>
+        <div class="win-sub" id="sw-sub">Tuyệt vời lắm!</div>
+        <div class="win-stats">
+          <div class="wstat"><div class="wstat-v" id="sw-time">-</div><div class="wstat-l">Thời gian</div></div>
+          <div class="wstat"><div class="wstat-v" id="sw-err">-</div><div class="wstat-l">Lỗi</div></div>
+          <div class="wstat"><div class="wstat-v" id="sw-stage">-</div><div class="wstat-l">Màn</div></div>
+        </div>
+        <button class="btn-pink" id="sw-next-btn" onclick="nextStage()">Màn tiếp theo →</button>
+        <button class="btn-outline" onclick="goHome()">Về trang chủ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEVEL COMPLETE -->
+  <div id="levelwin" class="screen">
+    <div class="lc-wrap">
+      <div class="lc-card" style="position:relative">
+        <div class="particle-layer" id="lw-particles"></div>
+        <div class="lc-big-cat" id="lw-bigcat"></div>
+        <div class="lc-title" id="lw-title">Chinh phục cấp độ!</div>
+        <div class="lc-sub" id="lw-sub">Bạn đã hoàn thành tất cả 5 màn!</div>
+        <div class="stars-big" id="lw-stars"></div>
+        <div class="trophy-row">
+          <div class="trophy-item"><div class="trophy-v" id="lw-time">-</div><div class="trophy-l">Tổng thời gian</div></div>
+          <div class="trophy-item"><div class="trophy-v" id="lw-best">-</div><div class="trophy-l">Kỷ lục màn</div></div>
+          <div class="trophy-item"><div class="trophy-v" id="lw-err">-</div><div class="trophy-l">Tổng lỗi</div></div>
+        </div>
+        <button class="btn-pink" onclick="startLevel(currentLevel)">Chơi lại cấp này</button>
+        <div style="margin:8px 0"></div>
+        <button class="btn-outline" onclick="goHome()">Chọn cấp độ khác</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOSE -->
+  <div id="lose" class="screen">
+    <div class="win-wrap">
+      <div class="win-card">
+        <div style="font-size:48px;margin-bottom:.5rem">😿</div>
+        <div class="win-title" style="color:#880E4F">Ôi không!</div>
+        <div class="win-sub">3 lần sai rồi... mèo buồn lắm!</div>
+        <button class="btn-pink" onclick="startStage()">Thử lại màn này</button>
+        <div style="margin:8px 0"></div>
+        <button class="btn-outline" onclick="goHome()">Về trang chủ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATS = {
+  easy:  {icon:'😸',bigCat:'🐱',color:'#FFB6C1',chip:'chip-easy',card:'lc-easy',lvName:'Dễ',givens:36,hints:3,msg:'Thật dễ dàng! Mèo khen bạn~'},
+  med:   {icon:'😺',bigCat:'🙀',color:'#CE93D8',chip:'chip-med', card:'lc-med', lvName:'Trung bình',givens:28,hints:2,msg:'Bạn thật thông minh!'},
+  hard:  {icon:'😼',bigCat:'😤',color:'#FFD54F',chip:'chip-hard',card:'lc-hard',lvName:'Khó',givens:22,hints:1,msg:'Siêu xuất sắc! Mèo phục bạn!'},
+  expert:{icon:'🙀',bigCat:'👑',color:'#F48FB1',chip:'chip-exp', card:'lc-exp', lvName:'Chuyên gia',givens:17,hints:0,msg:'HUYỀN THOẠI! Mèo cúi đầu!'}
+};
+const LV_KEYS = ['easy','med','hard','expert'];
+const CAT_FACES = ['😸','😺','😻','🐱','😽','🐾'];
+const STAGE_CATS = ['😸','😺','😻','😼','🙀'];
+const STAGE_MSGS = ['Màn 1 xong rồi! Tiếp thôi~','Giỏi lắm! Còn 3 màn nữa!','Xuất sắc! Nửa đường rồi!','Sắp xong rồi! Cố lên nào!'];
+
+let board=[],solution=[],given=[],notes=[];
+let selected=-1, currentLevel='easy', currentStage=0;
+let mistakes=0, timerSec=0, timerInt=null;
+let noteMode=false, hintsLeft=0, hintsUsed=0;
+let history=[], paused=false;
+let stageResults=[], totalErrors=0, bestStageTime=999999;
+let progress={easy:[0,0,0,0,0],med:[0,0,0,0,0],hard:[0,0,0,0,0],expert:[0,0,0,0,0]};
+let records={};
+
+function catSVG(type,size){
+  const sz=size||44;
+  const svgs={
+    sit:`<svg width="${sz}" height="${sz}" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="22" cy="32" rx="12" ry="9" fill="#FADADD" stroke="#FFB6C1" stroke-width="1"/>
+      <circle cx="22" cy="18" r="10" fill="#FADADD" stroke="#FFB6C1" stroke-width="1"/>
+      <path d="M13 12 L10 6 L16 10 Z" fill="#FF85A1"/><path d="M31 12 L34 6 L28 10 Z" fill="#FF85A1"/>
+      <circle cx="18" cy="17" r="2" fill="#C2185B"/><circle cx="26" cy="17" r="2" fill="#C2185B"/>
+      <path d="M19 21 Q22 23 25 21" stroke="#C2185B" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <line x1="14" y1="19" x2="9" y2="18" stroke="#CE93D8" stroke-width=".8"/><line x1="14" y1="21" x2="8" y2="21" stroke="#CE93D8" stroke-width=".8"/>
+      <line x1="30" y1="19" x2="35" y2="18" stroke="#CE93D8" stroke-width=".8"/><line x1="30" y1="21" x2="36" y2="21" stroke="#CE93D8" stroke-width=".8"/>
+      <ellipse cx="22" cy="19" rx="2" ry="1.5" fill="#FF85A1" opacity=".5"/>
+    </svg>`,
+    happy:`<svg width="${sz}" height="${sz}" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="22" cy="22" r="14" fill="#FADADD" stroke="#FFB6C1" stroke-width="1.2"/>
+      <path d="M14 14 L11 7 L18 11 Z" fill="#FF85A1"/><path d="M30 14 L33 7 L26 11 Z" fill="#FF85A1"/>
+      <path d="M17 18 Q18 15 19 18" stroke="#C2185B" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M25 18 Q26 15 27 18" stroke="#C2185B" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M17 25 Q22 30 27 25" stroke="#C2185B" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="17" cy="22" rx="3" ry="2" fill="#FFB6C1" opacity=".6"/>
+      <ellipse cx="27" cy="22" rx="3" ry="2" fill="#FFB6C1" opacity=".6"/>
+      <line x1="12" y1="21" x2="7" y2="20" stroke="#CE93D8" stroke-width=".8"/><line x1="12" y1="23" x2="6" y2="23" stroke="#CE93D8" stroke-width=".8"/>
+      <line x1="32" y1="21" x2="37" y2="20" stroke="#CE93D8" stroke-width=".8"/><line x1="32" y1="23" x2="38" y2="23" stroke="#CE93D8" stroke-width=".8"/>
+    </svg>`,
+    crown:`<svg width="${sz}" height="${sz}" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="22" cy="24" r="12" fill="#FADADD" stroke="#FFB6C1" stroke-width="1"/>
+      <path d="M14 16 L11 9 L18 13 Z" fill="#FF85A1"/><path d="M30 16 L33 9 L26 13 Z" fill="#FF85A1"/>
+      <path d="M8 18 L12 10 L17 16 L22 8 L27 16 L32 10 L36 18 Z" fill="#FFD700" stroke="#FFB300" stroke-width=".8"/>
+      <circle cx="18" cy="23" r="2" fill="#880E4F"/><circle cx="26" cy="23" r="2" fill="#880E4F"/>
+      <path d="M18 27 Q22 30 26 27" stroke="#C2185B" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <ellipse cx="22" cy="25" rx="2" ry="1.5" fill="#FF85A1" opacity=".5"/>
+    </svg>`
+  };
+  return svgs[type]||svgs.sit;
+}
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+function renderHome(){
+  const row=document.getElementById('home-cats-row');
+  row.innerHTML=CAT_FACES.slice(0,5).map(f=>`<span style="font-size:22px;animation:bounce ${.8+Math.random()*.6}s ${Math.random()*.3}s infinite">${f}</span>`).join('');
+  const grid=document.getElementById('lv-grid');
+  grid.innerHTML='';
+  LV_KEYS.forEach(k=>{
+    const c=CATS[k];
+    const done=progress[k].filter(v=>v>0).length;
+    const starsTotal=progress[k].reduce((a,b)=>a+b,0);
+    const btn=document.createElement('button');
+    btn.className='lcard '+c.card;
+    btn.innerHTML=`<div class="lc-cat">${c.icon}</div>
+      <div class="lc-name">${c.lvName}</div>
+      <div class="lc-info">${c.givens} ô gợi ý</div>
+      <div class="lc-prog">${done}/5 màn · ${starsTotal}⭐</div>
+      <div class="stars">${Array(done).fill('⭐').join('')}${Array(5-done).fill('☆').join('')}</div>`;
+    btn.onclick=()=>startLevel(k);
+    grid.appendChild(btn);
+  });
+  const rec=Object.entries(records).map(([k,v])=>`${CATS[k].lvName}: ${fmt(v)}`).join(' · ');
+  document.getElementById('home-record').textContent=rec?'🏆 Kỷ lục: '+rec:'';
+}
+
+function startLevel(lv){
+  currentLevel=lv; currentStage=0; stageResults=[]; totalErrors=0; bestStageTime=999999;
+  startStage();
+}
+
+function startStage(){
+  mistakes=0; noteMode=false; paused=false; history=[]; hintsUsed=0;
+  hintsLeft=CATS[currentLevel].hints;
+  const sol=generateFull();
+  solution=[...sol];
+  const puzzle=makePuzzle([...sol],CATS[currentLevel].givens);
+  board=[...puzzle]; given=puzzle.map(v=>v!==0); notes=Array(81).fill(null).map(()=>new Set());
+  const c=CATS[currentLevel];
+  const chip=document.getElementById('lv-chip');
+  chip.textContent=c.lvName+' · 5 màn'; chip.className='level-chip '+c.chip;
+  renderStageBar();
+  document.getElementById('note-btn').classList.remove('on');
+  updateMistakes();
+  renderBoard(); renderNumpad();
+  startTimer();
+  show('game');
+}
+
+function renderStageBar(){
+  const bar=document.getElementById('stage-bar');
+  bar.innerHTML=`<span class="stage-label">Màn</span>`;
+  for(let i=0;i<5;i++){
+    const d=document.createElement('div');
+    d.className='sdot'+(i<currentStage?' done':i===currentStage?' active':'');
+    bar.appendChild(d);
+  }
+}
+
+function generateFull(){const g=Array(81).fill(0);fill(g,0);return g}
+function fill(g,i){if(i===81)return true;if(g[i]!==0)return fill(g,i+1);const ns=shuffle([1,2,3,4,5,6,7,8,9]);for(let n of ns){if(valid(g,i,n)){g[i]=n;if(fill(g,i+1))return true;g[i]=0}}return false}
+function valid(g,i,n){const r=Math.floor(i/9),c=i%9;for(let j=0;j<9;j++){if(g[r*9+j]===n||g[j*9+c]===n)return false}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let a=0;a<3;a++)for(let b=0;b<3;b++)if(g[(br+a)*9+bc+b]===n)return false;return true}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function makePuzzle(sol,givens){const cells=shuffle([...Array(81).keys()]);const puzzle=[...sol];let removed=0;for(let idx of cells){if(81-removed<=givens)break;const old=puzzle[idx];puzzle[idx]=0;if(countSol([...puzzle])!==1)puzzle[idx]=old;else removed++}return puzzle}
+function countSol(g){const i=g.indexOf(0);if(i===-1)return 1;let c=0;for(let n=1;n<=9&&c<2;n++){if(valid(g,i,n)){g[i]=n;c+=countSol([...g]);g[i]=0}}return c}
+
+function renderBoard(){
+  const b=document.getElementById('board');
+  b.innerHTML='';
+  for(let i=0;i<81;i++){
+    const cell=document.createElement('div');
+    cell.className='cell'+(given[i]?' cell-given':'');
+    cell.dataset.idx=i;
+    cell.addEventListener('click',()=>selectCell(i));
+    if(board[i]!==0)cell.textContent=board[i];
+    else if(notes[i].size>0)renderNote(cell,i);
+    b.appendChild(cell);
+  }
+  if(selected!==-1)applyHL();
+}
+
+function renderNote(cell,i){
+  cell.innerHTML='';
+  const g=document.createElement('div');g.className='notes-grid';
+  for(let n=1;n<=9;n++){const nd=document.createElement('div');nd.className='nnote';nd.textContent=notes[i].has(n)?n:'';g.appendChild(nd)}
+  cell.appendChild(g);
+}
+
+function renderNumpad(){
+  const np=document.getElementById('numpad');np.innerHTML='';
+  const counts=Array(10).fill(0);board.forEach(v=>{if(v>0)counts[v]++});
+  for(let n=1;n<=9;n++){
+    const btn=document.createElement('button');
+    btn.className='nBtn'+(counts[n]>=9?' used':'');
+    btn.style.cssText='aspect-ratio:1;border:1.5px solid #FFB6C1;border-radius:12px;background:white;font-size:20px;font-weight:500;color:#C2185B;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;transition:transform .1s,background .1s';
+    btn.textContent=n;
+    const cnt=document.createElement('span');cnt.className='ncnt';cnt.textContent=counts[n]<9?(9-counts[n]):'';
+    btn.appendChild(cnt);btn.onclick=()=>inputNum(n);np.appendChild(btn);
+  }
+  const er=document.createElement('button');
+  er.style.cssText='aspect-ratio:1;border:1.5px solid #FFB6C1;border-radius:12px;background:white;font-size:14px;color:#CE93D8;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .1s';
+  er.textContent='✕';er.onclick=()=>inputNum(0);np.appendChild(er);
+}
+
+function getCellEl(i){return document.querySelector(`.cell[data-idx="${i}"]`)}
+
+function selectCell(i){selected=i;applyHL()}
+
+function applyHL(){
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('cell-selected','cell-hl','cell-same'));
+  if(selected===-1)return;
+  const r=Math.floor(selected/9),col=selected%9,val=board[selected];
+  document.querySelectorAll('.cell').forEach(c=>{
+    const i=+c.dataset.idx,cr=Math.floor(i/9),cc=i%9;
+    const br=Math.floor(cr/3)*3,bc=Math.floor(cc/3)*3,sr=Math.floor(r/3)*3,sc=Math.floor(col/3)*3;
+    if(i===selected){c.classList.add('cell-selected');return}
+    if(cr===r||cc===col||(br===sr&&bc===sc))c.classList.add('cell-hl');
+    if(val&&board[i]===val&&board[i]!==0)c.classList.add('cell-same');
+  });
+}
+
+function inputNum(n){
+  if(selected===-1||given[selected]||paused)return;
+  if(noteMode&&n>0){
+    history.push({type:'note',idx:selected,prev:new Set(notes[selected])});
+    notes[selected].has(n)?notes[selected].delete(n):notes[selected].add(n);
+    renderNote(getCellEl(selected),selected);return;
+  }
+  history.push({type:'val',idx:selected,prev:board[selected]});
+  board[selected]=n;notes[selected].clear();
+  const cell=getCellEl(selected);
+  cell.innerHTML=n||'';cell.classList.remove('cell-error','cell-ok','cell-input');
+  if(n===0){cell.classList.remove('cell-input')}
+  else if(n!==solution[selected]){
+    cell.classList.add('cell-error','cell-input');mistakes++;totalErrors++;updateMistakes();
+    if(mistakes>=3)setTimeout(()=>show('lose'),600);
+  }else{
+    cell.classList.add('cell-input','cell-ok');
+    setTimeout(()=>cell&&cell.classList.remove('cell-ok'),500);
+    clearRelatedNotes(selected,n);
+  }
+  renderNumpad();applyHL();checkWin();
+}
+
+function clearRelatedNotes(idx,n){
+  const r=Math.floor(idx/9),c=idx%9,br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;
+  for(let i=0;i<81;i++){
+    if(board[i]===0&&notes[i].has(n)){
+      const ir=Math.floor(i/9),ic=i%9;
+      if(ir===r||ic===c||(Math.floor(ir/3)*3===br&&Math.floor(ic/3)*3===bc)){
+        notes[i].delete(n);const cel=getCellEl(i);
+        if(notes[i].size>0)renderNote(cel,i);else cel.innerHTML='';
+      }
+    }
+  }
+}
+
+function undoMove(){
+  if(!history.length)return;
+  const last=history.pop();
+  if(last.type==='val'){board[last.idx]=last.prev;const cell=getCellEl(last.idx);cell.textContent=last.prev||'';cell.classList.remove('cell-error','cell-ok','cell-input');if(last.prev)cell.classList.add('cell-input')}
+  else{notes[last.idx]=last.prev;renderNote(getCellEl(last.idx),last.idx)}
+  renderNumpad();applyHL();
+}
+
+function toggleNote(){noteMode=!noteMode;document.getElementById('note-btn').classList.toggle('on',noteMode)}
+
+function useHint(){
+  if(hintsLeft<=0){const b=document.getElementById('board');b.style.animation='shake .35s';setTimeout(()=>b.style.animation='',350);return}
+  if(selected===-1||given[selected]||board[selected]===solution[selected])return;
+  hintsLeft--;hintsUsed++;board[selected]=solution[selected];notes[selected].clear();given[selected]=true;
+  const cell=getCellEl(selected);cell.textContent=solution[selected];cell.className='cell cell-given cell-selected';
+  renderNumpad();applyHL();checkWin();
+}
+
+function togglePause(){paused=!paused;document.getElementById('pi').textContent=paused?'▶':'⏸';document.getElementById('timer').style.opacity=paused?'.4':'1'}
+
+function startTimer(){clearInterval(timerInt);timerSec=0;document.getElementById('timer').textContent='0:00';timerInt=setInterval(()=>{if(!paused){timerSec++;document.getElementById('timer').textContent=fmt(timerSec)}},1000)}
+
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+
+function updateMistakes(){for(let i=0;i<3;i++){const d=document.getElementById('m'+i);d.classList.toggle('used',i<mistakes)}}
+
+function checkWin(){if(board.every((v,i)=>v===solution[i])){clearInterval(timerInt);setTimeout(stageComplete,400)}}
+
+function calcStars(){
+  const maxT={easy:180,med:300,hard:480,expert:720}[currentLevel]||300;
+  if(mistakes===0&&timerSec<maxT/2)return 3;
+  if(mistakes<=1&&timerSec<maxT)return 2;
+  return 1;
+}
+
+function stageComplete(){
+  const stars=calcStars();
+  if(timerSec<bestStageTime)bestStageTime=timerSec;
+  stageResults.push({time:timerSec,mistakes,stars});
+  if(progress[currentLevel][currentStage]<stars)progress[currentLevel][currentStage]=stars;
+  document.getElementById('sw-time').textContent=fmt(timerSec);
+  document.getElementById('sw-err').textContent=mistakes;
+  document.getElementById('sw-stage').textContent=(currentStage+1)+'/5';
+  const icons=['😸','😺','😻','😼','🙀'];
+  document.getElementById('sw-icon').textContent=icons[currentStage];
+  document.getElementById('sw-title').textContent=currentStage<4?'Màn '+(currentStage+1)+' hoàn thành!':'Màn cuối xong!';
+  document.getElementById('sw-sub').textContent=currentStage<4?STAGE_MSGS[currentStage]:CATS[currentLevel].msg;
+  const nextBtn=document.getElementById('sw-next-btn');
+  if(currentStage<4){nextBtn.textContent='Màn '+(currentStage+2)+' →';nextBtn.style.display='block'}
+  else{nextBtn.textContent='Xem phần thưởng! 🎁';nextBtn.style.display='block'}
+  const catsRow=document.getElementById('sw-cats');
+  catsRow.innerHTML=`<span style="animation:bounce .8s infinite;display:inline-block">${catSVG(stars===3?'crown':'happy',48)}</span>`;
+  launchHearts('sw-particles',8);
+  show('stagewin');
+}
+
+function nextStage(){
+  currentStage++;
+  if(currentStage>=5){levelComplete();return}
+  startStage();
+}
+
+function levelComplete(){
+  const totalTime=stageResults.reduce((a,b)=>a+b.time,0);
+  const totalStars=stageResults.reduce((a,b)=>a+b.stars,0);
+  const totalErrs=stageResults.reduce((a,b)=>a+b.mistakes,0);
+  if(!records[currentLevel]||totalTime<records[currentLevel])records[currentLevel]=totalTime;
+  document.getElementById('lw-time').textContent=fmt(totalTime);
+  document.getElementById('lw-best').textContent=fmt(bestStageTime);
+  document.getElementById('lw-err').textContent=totalErrs;
+  const c=CATS[currentLevel];
+  document.getElementById('lw-bigcat').innerHTML=catSVG('crown',72);
+  document.getElementById('lw-title').textContent='Chinh phục '+c.lvName+'!';
+  document.getElementById('lw-sub').textContent=c.msg;
+  const starsEl=document.getElementById('lw-stars');
+  starsEl.innerHTML='';
+  for(let i=0;i<5;i++){
+    const s=document.createElement('span');s.textContent='⭐';s.style.cssText=`font-size:28px;animation:bounce .6s ${i*.1}s both`;starsEl.appendChild(s);
+  }
+  if(totalStars>=15){
+    const bonus=document.createElement('span');bonus.textContent='👑';bonus.style.cssText='font-size:28px;animation:spin 1s .6s both';starsEl.appendChild(bonus);
+  }
+  launchConfetti('lw-particles',40);
+  show('levelwin');
+}
+
+function launchHearts(pid,count){
+  const p=document.getElementById(pid);p.innerHTML='';
+  const hearts=['❤','💕','💖','💗','🌸','✨'];
+  for(let i=0;i<count;i++){
+    const h=document.createElement('span');h.className='heart-p';
+    h.textContent=hearts[Math.floor(Math.random()*hearts.length)];
+    h.style.cssText=`left:${10+Math.random()*80}%;bottom:10%;animation-delay:${Math.random()*.5}s;animation-duration:${.6+Math.random()*.4}s`;
+    p.appendChild(h);
+  }
+  setTimeout(()=>p.innerHTML='',1500);
+}
+
+function launchConfetti(pid,count){
+  const p=document.getElementById(pid);p.innerHTML='';
+  const colors=['#FF85A1','#CE93D8','#FFD700','#FF69B4','#FFB347','#87CEEB','#98FB98'];
+  for(let i=0;i<count;i++){
+    const c=document.createElement('div');c.className='confetti-p';
+    c.style.cssText=`left:${Math.random()*100}%;top:-5%;background:${colors[i%colors.length]};border-radius:${Math.random()>0.5?'50%':'3px'};animation:confettiDrop ${.8+Math.random()*1.4}s ${Math.random()*.6}s ease forwards`;
+    p.appendChild(c);
+  }
+  setTimeout(()=>p.innerHTML='',2800);
+}
+
+function goHome(){clearInterval(timerInt);renderHome();show('home')}
+
+renderHome();
+</script>
