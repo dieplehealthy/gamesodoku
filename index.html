@@ -272,13 +272,27 @@ html, body {
 .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid var(--pk4); }
 .cell:last-child           { border-right: none; }
 
-.cell.given    { color: var(--pk6); background: #FFF5F8; }
-.cell.input    { color: #7B1FA2; }
+/* ô có số gốc: nền hồng nhạt rõ */
+.cell.given    { color: var(--pk6); background: #FFE8F2; font-weight: 900; }
+
+/* ô TRỐNG — xen kẽ sáng/tối theo vùng box 3×3
+   box index = (row/3)*3 + (col/3)  →  0,1,2,3,4,5,6,7,8
+   box chẵn = trắng, box lẻ = tím cực nhạt */
+.cell.empty-even { background: #FFFFFF; }
+.cell.empty-odd  { background: #F7F0FF; }
+
+/* ô người dùng đã điền */
+.cell.input    { color: #7B1FA2; font-weight: 800; }
+.cell.empty-even.input { background: #FFFFFF; }
+.cell.empty-odd.input  { background: #F7F0FF; }
+
 .cell.wrong    { color: #B71C1C !important; background: #FFEBEE !important; animation: shake .35s; }
 .cell.sel      { background: var(--pk2) !important; }
-.cell.hl       { background: #FFF0F5; }
+.cell.hl.empty-even { background: #FFF0F8; }
+.cell.hl.empty-odd  { background: #F0E8FF; }
+.cell.hl       { background: #FFF0F8; }
 .cell.same     { background: var(--pk1); }
-.cell.ok       { background: #F3E5F5 !important; color: var(--pu4) !important; }
+.cell.ok       { background: #EDE7F6 !important; color: var(--pu4) !important; }
 .cell.given.sel { background: #FF85A1 !important; }
 
 .notes-grid {
@@ -456,6 +470,25 @@ html, body {
 /* ─── LOSE SCREEN ─── */
 .lose-cat { font-size: 72px; display: block; animation: wiggle 1s infinite; }
 
+/* ─── RESUME BANNER ─── */
+.resume-band {
+  margin: 12px 16px 0; width: calc(100% - 32px);
+  background: linear-gradient(135deg, #FFE4EF, #F3E5F5);
+  border-radius: 18px; padding: 12px 14px;
+  border: 2px solid var(--pk2);
+  display: flex; align-items: center; gap: 10px;
+  z-index: 1; cursor: pointer;
+  box-shadow: 0 2px 12px #E8447A20;
+  transition: transform .15s;
+  animation: fadeUp .4s ease;
+}
+.resume-band:active { transform: scale(.97); }
+.resume-band .rb-cat { font-size: 26px; }
+.resume-band .rb-info { flex: 1; }
+.resume-band .rb-title { font-size: 13px; font-weight: 800; color: var(--pk5); }
+.resume-band .rb-sub   { font-size: 11px; color: var(--pk4); font-weight: 600; margin-top: 2px; }
+.resume-band .rb-arrow { font-size: 18px; color: var(--pk4); }
+
 /* ─── RESPONSIVE FINE TUNE ─── */
 @media (max-height: 700px) {
   .board-wrap { padding: 6px 10px 4px; }
@@ -491,6 +524,15 @@ html, body {
     <div class="section-title">Chọn cấp độ</div>
 
     <div class="level-grid" id="lvGrid"></div>
+
+    <div class="resume-band" id="resumeBand" style="display:none" onclick="resumeGame()">
+      <div class="rb-cat" id="resumeCat">😺</div>
+      <div class="rb-info">
+        <div class="rb-title" id="resumeTitle">Tiếp tục chơi?</div>
+        <div class="rb-sub"   id="resumeSub">Bạn đang ở màn X cấp độ Y</div>
+      </div>
+      <div class="rb-arrow">▶</div>
+    </div>
 
     <div class="best-band" id="bestBand" style="display:none">
       <div class="trophy">🏆</div>
@@ -631,6 +673,56 @@ function saveData(){
   localStorage.setItem('maoday_rec',  JSON.stringify(records));
 }
 
+/* ─── SAVE / RESTORE GAME STATE ─── */
+function saveGameState(){
+  const state={
+    currentLevel, currentStage,
+    board, solution, given,
+    notes: notes.map(s=>[...s]),
+    mistakes, timerSec, hintsLeft, hintsUsed,
+    stageResults, bestStageTime:bestStageTime===Infinity?-1:bestStageTime,
+    ts: Date.now()
+  };
+  localStorage.setItem('maoday_game', JSON.stringify(state));
+}
+
+function clearGameState(){ localStorage.removeItem('maoday_game'); }
+
+function loadGameState(){
+  try{
+    const raw=localStorage.getItem('maoday_game');
+    if(!raw) return null;
+    const s=JSON.parse(raw);
+    // bỏ qua save quá 24h
+    if(Date.now()-s.ts > 86400000){ clearGameState(); return null; }
+    return s;
+  }catch(e){ return null; }
+}
+
+function resumeGame(){
+  const s=loadGameState(); if(!s) return;
+  currentLevel=s.currentLevel; currentStage=s.currentStage;
+  board=[...s.board]; solution=[...s.solution]; given=[...s.given];
+  notes=s.notes.map(a=>new Set(a));
+  mistakes=s.mistakes; timerSec=s.timerSec;
+  hintsLeft=s.hintsLeft; hintsUsed=s.hintsUsed;
+  stageResults=s.stageResults||[];
+  bestStageTime=s.bestStageTime===-1?Infinity:s.bestStageTime;
+  selected=-1; noteMode=false; paused=false; history=[];
+  hideOverlays();
+
+  const lv=LEVELS[currentLevel];
+  const chip=document.getElementById('lvChip');
+  chip.textContent=lv.name+' · 5 màn'; chip.className='lv-chip '+lv.cls;
+  document.getElementById('noteBtn').classList.remove('on');
+  updateMistakes(); renderStageDots(); renderBoard(); renderNumpad(); updateHintBtn();
+  clearInterval(timerInt);
+  document.getElementById('timer').textContent=fmt(timerSec);
+  document.getElementById('timer').classList.remove('paused');
+  timerInt=setInterval(()=>{ if(!paused){ timerSec++; document.getElementById('timer').textContent=fmt(timerSec); saveGameState(); } },1000);
+  showScreen('game');
+}
+
 LV_KEYS.forEach(k=>{ if(!progress[k]) progress[k]=Array(5).fill(0); });
 
 /* ─── SUDOKU ENGINE ─── */
@@ -708,6 +800,17 @@ function renderHome(){
     btn.onclick=()=>startLevel(k);
     grid.appendChild(btn);
   });
+  /* resume band */
+  const saved=loadGameState();
+  const rb=document.getElementById('resumeBand');
+  if(saved){
+    const lv=LEVELS[saved.currentLevel];
+    document.getElementById('resumeCat').textContent=lv.cat;
+    document.getElementById('resumeTitle').textContent=`Tiếp tục: ${lv.name} — Màn ${saved.currentStage+1}`;
+    document.getElementById('resumeSub').textContent=`⏱ ${fmt(saved.timerSec)}  ·  ❤️ ${3-saved.mistakes} còn lại`;
+    rb.style.display='flex';
+  } else rb.style.display='none';
+
   /* records */
   const hasRec=Object.keys(records).length>0;
   const band=document.getElementById('bestBand');
@@ -757,8 +860,9 @@ function startStage(){
   timerSec=0;
   document.getElementById('timer').textContent='0:00';
   document.getElementById('timer').classList.remove('paused');
-  timerInt=setInterval(()=>{ if(!paused){ timerSec++; document.getElementById('timer').textContent=fmt(timerSec); } },1000);
+  timerInt=setInterval(()=>{ if(!paused){ timerSec++; document.getElementById('timer').textContent=fmt(timerSec); if(timerSec%10===0) saveGameState(); } },1000);
 
+  saveGameState();
   showScreen('game');
 }
 
@@ -775,8 +879,11 @@ function renderStageDots(){
 function renderBoard(){
   const b=document.getElementById('board'); b.innerHTML='';
   for(let i=0;i<81;i++){
+    const row=Math.floor(i/9), col=i%9;
+    const boxIdx=Math.floor(row/3)*3+Math.floor(col/3);
+    const boxClass=given[i]?'':((boxIdx%2===0)?'empty-even':'empty-odd');
     const c=document.createElement('div');
-    c.className='cell'+(given[i]?' given':'');
+    c.className='cell'+(given[i]?' given':'')+' '+boxClass;
     c.dataset.i=i;
     c.addEventListener('click',()=>selectCell(i));
     if(board[i]) c.textContent=board[i];
@@ -837,27 +944,32 @@ function applyHL(){
 /* ─── INPUT ─── */
 function inputNum(n){
   if(selected===-1||given[selected]||paused) return;
+  const row=Math.floor(selected/9), col=selected%9;
+  const boxIdx=Math.floor(row/3)*3+Math.floor(col/3);
+  const boxCls=(boxIdx%2===0)?'empty-even':'empty-odd';
   if(noteMode&&n>0){
     history.push({type:'note',idx:selected,prev:new Set(notes[selected])});
     notes[selected].has(n)?notes[selected].delete(n):notes[selected].add(n);
     const cell=getCellEl(selected);
-    cell.className='cell input'; renderNoteIn(cell,selected); return;
+    cell.className=`cell input ${boxCls}`; renderNoteIn(cell,selected);
+    saveGameState(); return;
   }
   history.push({type:'val',idx:selected,prev:board[selected]});
   board[selected]=n; notes[selected].clear();
   const cell=getCellEl(selected);
   cell.innerHTML=n||'';
-  cell.className='cell'+(given[selected]?' given':'');
+  cell.className=`cell ${boxCls}`;
   if(n===0){ /* erase */ }
   else if(n!==solution[selected]){
     cell.classList.add('wrong','input'); mistakes++;
-    updateMistakes();
-    if(mistakes>=3) setTimeout(()=>showOverlay('loseScreen'),600);
+    updateMistakes(); saveGameState();
+    if(mistakes>=3){ clearGameState(); setTimeout(()=>showOverlay('loseScreen'),600); }
   } else {
     cell.classList.add('ok','input');
     clearRelatedNotes(selected,n);
     setTimeout(()=>cell&&cell.classList.replace('ok','input'),500);
     spawnCellParticle(cell);
+    saveGameState();
   }
   renderNumpad(); applyHL(); checkWin();
 }
@@ -914,7 +1026,7 @@ function useHint(){
   board[selected]=solution[selected]; notes[selected].clear(); given[selected]=true;
   const cell=getCellEl(selected);
   cell.textContent=solution[selected]; cell.className='cell given sel';
-  updateHintBtn(); renderNumpad(); applyHL(); checkWin();
+  updateHintBtn(); renderNumpad(); applyHL(); checkWin(); saveGameState();
 }
 
 function shakeBoard(){
@@ -989,6 +1101,7 @@ function nextStage(){
 /* ─── LEVEL COMPLETE ─── */
 function levelComplete(){
   hideOverlays();
+  clearGameState();
   const totalTime=stageResults.reduce((a,b)=>a+b.time,0);
   const totalErr =stageResults.reduce((a,b)=>a+b.mistakes,0);
   const totalStars=stageResults.reduce((a,b)=>a+b.stars,0);
